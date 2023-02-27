@@ -21,12 +21,17 @@ export class AuthService {
     // получаем логин и формируем H
     async login1(userDto: CreateUserDto) {
         let candidate = await this.userService.getUserByEmail(userDto.email);
+
+        let g = (this.getRandomInt(99) + 1);
+        let a = (this.getRandomInt(99) + 1);
+        let p = (this.getRandomInt(99) + 1);
+        let A = Math.pow(g, a)%p;
         
         if(candidate){
             const H = (this.getRandomInt(99) + 1).toString();
             candidate.H = H;
             await candidate.save()
-            return {H};
+            return {H, A, g, p, a};
         }
         throw new HttpException('Неверное имя пользователя или пароль', HttpStatus.BAD_REQUEST); 
     }
@@ -34,13 +39,19 @@ export class AuthService {
     // получаем H и сравниваем его с H из бд
     async login2(userDto: CreateUserDto) {
         const user = await this.userService.getUserByEmail(userDto.email);
+
+        const K = Math.pow(userDto.B, userDto.a)%userDto.p;
         
         const passwordHash = cryptoJs.MD5(user.password).toString()
         const hHash = cryptoJs.MD5(user.H).toString()
         const newH = cryptoJs.MD5(hHash + passwordHash).toString();
 
+        console.log(passwordHash);
+        console.log(hHash);
+        console.log(newH);
+
         if(newH == userDto.H){
-            return {message: 'Соединение успешно установлено'}
+            return {message: 'Соединение успешно установлено', K}
         }
         throw new HttpException('H не совпадают', HttpStatus.BAD_REQUEST); 
     }
